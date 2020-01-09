@@ -2,6 +2,7 @@
 namespace verbb\postie\base;
 
 use verbb\postie\Postie;
+use verbb\postie\events\FetchRatesEvent;
 use verbb\postie\models\ShippingMethod;
 
 use Craft;
@@ -25,6 +26,7 @@ abstract class Provider extends SavableComponent implements ProviderInterface
     const VALUE = 'value';
 
     const EVENT_MODIFY_RATES = 'modifyRates';
+    const EVENT_BEFORE_FETCH_RATES = 'beforeFetchRates';
 
 
     // Properties
@@ -39,7 +41,7 @@ abstract class Provider extends SavableComponent implements ProviderInterface
 
     protected $_client;
     protected $_rates;
-    protected static $_cachedRates;
+    protected $_cachedRates;
 
 
     // Public Methods
@@ -71,14 +73,27 @@ abstract class Provider extends SavableComponent implements ProviderInterface
     {
         $class = $this->displayName();
 
+        // Some special cases here, which is a bit annoying...
+        if ($class === 'USPS' || $class === 'UPS') {
+            return strtolower($class);
+        }
+
+        if ($class === 'TNTAustralia') {
+            return 'tntAustralia';
+        }
+
         return StringHelper::toCamelCase($class);
     }
 
     public function getIconUrl()
     {
-        $handle = strtolower($this->displayName());
+        try {
+            $handle = strtolower($this->displayName());
 
-        return Craft::$app->assetManager->getPublishedUrl('@verbb/postie/resources/dist/img/' . $handle . '.svg', true);
+            return Craft::$app->assetManager->getPublishedUrl('@verbb/postie/resources/dist/img/' . $handle . '.svg', true);
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 
     public function isConfigured(): bool
@@ -236,11 +251,13 @@ abstract class Provider extends SavableComponent implements ProviderInterface
 
     public function prepareFetchShippingRates($order)
     {
-        if (self::$_cachedRates === null) {
-            self::$_cachedRates = $this->fetchShippingRates($order);
+        $cachedRates = $this->_cachedRates[$this->handle] ?? [];
+
+        if (!$cachedRates) {
+            $cachedRates = $this->_cachedRates[$this->handle] = $this->fetchShippingRates($order);
         }
 
-        return self::$_cachedRates;
+        return $cachedRates;
     }
 
 
@@ -346,5 +363,22 @@ abstract class Provider extends SavableComponent implements ProviderInterface
             'height' => (int)$height,
             'weight' => (float)$weight,
         ];
+    }
+
+    protected function beforeFetchRates(&$storeLocation, &$dimensions, $order)
+    {
+        $fetchRatesEvent = new FetchRatesEvent([
+            'storeLocation' => $storeLocation,
+            'dimensions' => $dimensions,
+            'order' => $order,
+        ]);
+
+        if ($this->hasEventHandlers(self::EVENT_BEFORE_FETCH_RATES)) {
+            $this->trigger(self::EVENT_BEFORE_FETCH_RATES, $fetchRatesEvent);
+        }
+
+        // Update back
+        $storeLocation = $fetchRatesEvent->storeLocation;
+        $dimensions = $fetchRatesEvent->dimensions;
     }
 }

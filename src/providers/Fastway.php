@@ -56,6 +56,9 @@ class Fastway extends Provider
         $storeLocation = Commerce::getInstance()->getAddresses()->getStoreLocationAddress();
         $dimensions = $this->getDimensions($order, 'kg', 'cm');
 
+        // Allow location and dimensions modification via events
+        $this->beforeFetchRates($storeLocation, $dimensions, $order);
+
         //
         // TESTING
         //
@@ -119,6 +122,7 @@ class Fastway extends Provider
             $modifyRatesEvent = new ModifyRatesEvent([
                 'rates' => $this->_rates,
                 'response' => $response,
+                'order' => $order,
             ]);
 
             if ($this->hasEventHandlers(self::EVENT_MODIFY_RATES)) {

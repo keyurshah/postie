@@ -10,6 +10,7 @@ use verbb\postie\providers\CanadaPost;
 use verbb\postie\providers\Fastway;
 use verbb\postie\providers\FedEx;
 use verbb\postie\providers\TNT;
+use verbb\postie\providers\TNTAustralia;
 use verbb\postie\providers\UPS;
 use verbb\postie\providers\USPS;
 
@@ -40,7 +41,7 @@ class Providers extends Component
             $providers[$provider->getHandle()] = $provider;
         }
 
-        ksort($providers);
+        ksort($providers, SORT_STRING | SORT_FLAG_CASE);
 
         return $providers;
     }
@@ -68,6 +69,7 @@ class Providers extends Component
             Fastway::class,
             FedEx::class,
             // TNT::class,
+            TNTAustralia::class,
             UPS::class,
             USPS::class,
         ];
