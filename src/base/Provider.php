@@ -383,9 +383,9 @@ abstract class Provider extends SavableComponent implements ProviderInterface
         $height = $orderHeight->toUnit($dimensionUnit);
 
         return [
-            'length' => (int)$length,
-            'width'  => (int)$width,
-            'height' => (int)$height,
+            'length' => (float)$length,
+            'width'  => (float)$width,
+            'height' => (float)$height,
             'weight' => (float)$weight,
         ];
     }
