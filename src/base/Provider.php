@@ -355,9 +355,9 @@ abstract class Provider extends SavableComponent implements ProviderInterface
         }
 
         return [
-            'length' => (int)$maxWidth,
-            'width'  => (int)$maxLength,
-            'height' => (int)$totalHeight,
+            'length' => (float)$maxWidth,
+            'width'  => (float)$maxLength,
+            'height' => (float)$totalHeight,
         ];
     }
 
