@@ -2,7 +2,7 @@
     "name": "verbb/postie",
     "description": "Provide live shipping rates during checkout from Australia Post, UPS, Fedex, and more.",
     "type": "craft-plugin",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "keywords": [
         "craft",
         "cms",
@@ -32,13 +32,14 @@
     "require": {
         "craftcms/cms": "^3.1.0",
         "craftcms/commerce": "^2.1.0 || ^3.0.0",
+        "verbb/base": "^1.0.0",
         "cakephp/core": "^3.5",
         "cakephp/utility": "^3.3.12",
         "jeremy-dunn/php-fedex-api-wrapper": "^3.0",
         "vinceg/usps-php-api": "^1.0.0",
         "gabrielbull/ups-api": "^0.8.0",
         "php-units-of-measure/php-units-of-measure": "^2.1",
-        "verdant/xml2array": "dev-master"
+        "cakephp/utility": "^3.8"
     },
     "autoload": {
         "psr-4": {
