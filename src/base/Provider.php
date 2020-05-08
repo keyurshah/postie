@@ -223,6 +223,13 @@ abstract class Provider extends SavableComponent implements ProviderInterface
             return;
         }
 
+        // Check if we're manually fetching rates, only proceed if we are
+        if ($settings->manualFetchRates && !Craft::$app->getSession()->get('postieManualFetchRates')) {
+            Provider::log($this, 'Postie set to manually fetch rates. Required POST param not provided.');
+
+            return;
+        }
+
         $shippingRates = [];
 
         if ($settings->enableCaching) {        
@@ -246,6 +253,9 @@ abstract class Provider extends SavableComponent implements ProviderInterface
             $shippingRates = $this->prepareFetchShippingRates($order);
         }
 
+        // Remove our session variable for fetching live rates manually (even if we're not opting to use it)
+        Craft::$app->getSession()->remove('postieManualFetchRates');
+
         return $shippingRates;
     }
 
@@ -258,6 +268,31 @@ abstract class Provider extends SavableComponent implements ProviderInterface
         }
 
         return $cachedRates;
+    }
+
+    public function getSignature($handle, $order)
+    {
+        $totalLength = 0;
+        $totalWidth = 0;
+        $totalHeight = 0;
+
+        foreach ($order->lineItems as $key => $lineItem) {
+            $totalLength += ($lineItem->qty * $lineItem->length);
+            $totalWidth += ($lineItem->qty * $lineItem->width);
+            $totalHeight += ($lineItem->qty * $lineItem->height);
+        }
+
+        $signature = implode('.', [
+            $handle,
+            $order->getTotalQty(),
+            $order->getTotalWeight(),
+            $totalWidth,
+            $totalHeight,
+            $totalLength,
+            implode('.', $order->shippingAddress->toArray()),
+        ]);
+
+        return md5($signature);
     }
 
 
@@ -291,31 +326,6 @@ abstract class Provider extends SavableComponent implements ProviderInterface
 
     // Protected Methods
     // =========================================================================
-
-    protected function getSignature($handle, $order)
-    {
-        $totalLength = 0;
-        $totalWidth = 0;
-        $totalHeight = 0;
-
-        foreach ($order->lineItems as $key => $lineItem) {
-            $totalLength += ($lineItem->qty * $lineItem->length);
-            $totalWidth += ($lineItem->qty * $lineItem->width);
-            $totalHeight += ($lineItem->qty * $lineItem->height);
-        }
-
-        $signature = implode('.', [
-            $handle,
-            $order->getTotalQty(),
-            $order->getTotalWeight(),
-            $totalWidth,
-            $totalHeight,
-            $totalLength,
-            implode('.', $order->shippingAddress->toArray()),
-        ]);
-
-        return md5($signature);
-    }
 
     protected function getPackageDimensions($order)
     {

@@ -5,14 +5,42 @@ use verbb\postie\Postie;
 use verbb\postie\models\ShippingMethod;
 
 use Craft;
+use craft\commerce\elements\Order;
 use craft\commerce\events\RegisterAvailableShippingMethodsEvent;
 
 use yii\base\Component;
+use yii\base\Event;
 
 class Service extends Component
 {
+    // Properties
+    // =========================================================================
+
+    private $_cachedShippingMethods;
+
+
     // Public Methods
     // =========================================================================
+
+    public function onAfterSaveOrder(Event $event)
+    {
+        if (!is_a($event->element, Order::class)) {
+            return;
+        }
+
+        $settings = Postie::$plugin->getSettings();
+        $request = Craft::$app->getRequest();
+
+        // Only care about this being enabled
+        if (!$settings->manualFetchRates) {
+            return;
+        }
+
+        // Check it matches the config variable
+        if ($request->getParam('fetchRatesPostValue') == $settings->fetchRatesPostValue) {
+            Craft::$app->getSession()->set('postieManualFetchRates', true);
+        }
+    }
 
     public function registerShippingMethods(RegisterAvailableShippingMethodsEvent $event)
     {
@@ -22,6 +50,16 @@ class Service extends Component
 
         // Fetch all providers (enabled or otherwise)
         $providers = Postie::$plugin->getProviders()->getAllProviders();
+
+        // Provide some class-based local cache, becaues this function is called multiple times
+        // throughout an order-update lifecycle. Do this, even if caching is disabled
+        if ($this->_cachedShippingMethods) {
+            foreach ($this->_cachedShippingMethods as $shippingMethod) {
+                $event->shippingMethods[] = $shippingMethod;
+            }
+
+            return;
+        }
 
         foreach ($providers as $provider) {
             if (!$provider->enabled) {
@@ -40,6 +78,9 @@ class Service extends Component
                     $shippingMethod->rateOptions = $rate['options'] ?? [];
 
                     $event->shippingMethods[] = $shippingMethod;
+
+                    // Save it to a local class cache
+                    $this->_cachedShippingMethods[] = $shippingMethod;
                 }
             }
         }

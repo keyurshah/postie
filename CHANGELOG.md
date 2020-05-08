@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.2.0 - 2020-05-03
+
+### Added
+- Added `manualFetchRates` config option, to allow you to manage manually fetching rates on-demand. Read the [docs](https://verbb.io/craft-plugins/postie/docs/setup-configuration/manually-fetching-rates) for more info.
+
+### Changed
+- Greatly improve caching mechanism for initial requests to providers. This should result in faster rates-fetching.
+- Provider function `getSignature` is now public.
+
+## 2.1.4 - 2020-04-16
+
+### Fixed
+- Fix logging error `Call to undefined method setFileLogging()`.
+
+## 2.1.3 - 2020-04-15
+
+### Added
+- Add support for UPS “Sure Post”.
+
+### Changed
+- File logging now checks if the overall Craft app uses file logging.
+- Log files now only include `GET` and `POST` additional variables.
+
+## 2.1.2 - 2020-03-17
+
+### Fixed
+- Canada Post - Fix incorrect URL for live requests.
+- Fix styling issues for provider markup settings.
+
 ## 2.1.1 - 2020-01-18
 
 ### Added
